@@ -1,1 +1,47 @@
 @import 'tailwindcss';
+
+html,
+body,
+#app {
+    height: 100%;
+    margin: 0;
+}
+
+@font-face {
+    font-family: win98;
+    src: url("/fonts/W95font.otf");
+}
+
+@font-face {
+    font-family: "MS Sans Serif";
+    src: url("/fonts/ms_sans_serif.woff2") format("woff2");
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "MS Sans Serif";
+    src: url("/fonts/ms_sans_serif_bold.woff2") format("woff2");
+    font-weight: bold;
+}
+
+html body {
+    background-color: #008080;
+    font-family: win98;
+}
+
+.ui-icon {
+    color: white;
+    text-align: center;
+    vertical-align: top;
+    width: 72px;
+    z-index: 0;
+    line-height: 12px;
+    margin: 0;
+    padding: 8px 1px;
+    font-size: 12px;
+}
+
+
+:root {
+    --font-sans-serif: "MS Sans Serif";
+}
