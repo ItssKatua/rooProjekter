@@ -29,6 +29,13 @@ html body {
     font-family: win98;
 }
 
+.desktop {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
 .ui-icon {
     color: white;
     text-align: center;

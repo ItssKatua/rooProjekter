@@ -143,6 +143,7 @@ input[type=submit]:disabled {
 }
 
 .title-bar {
+    user-select: none;
     align-items: center;
     background: linear-gradient(90deg, navy, #1084d0);
     display: flex;
@@ -799,6 +800,7 @@ summary:focus {
 }
 
 menu[role=tablist] {
+    user-select: none;
     display: flex;
     list-style-type: none;
     margin: 0 0 -2px;
