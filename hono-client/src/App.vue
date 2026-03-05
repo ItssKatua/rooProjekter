@@ -91,7 +91,7 @@ function ChangePage(target){
         @focus="focusWindow(occ.id)"
         @close="closeWindow(occ.id)">
 
-      <template #windowMenu v-if="occ.id === 1 && ">
+      <template #windowMenu v-if="occ.id === 1">
         <menu role="tablist" class="tab-menu">
           <li v-for="tab in tabs" role="tab" :aria-selected="tab.name === activePage ? 'true' : 'false'">
             <a href="#" @click.prevent="ChangePage(tab.name)">{{ tab.label }}</a>
