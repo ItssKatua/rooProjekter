@@ -1,12 +1,25 @@
 <template>
     <div>
-        <!-- tabs menu -->
+        <div v-if="activePage === 'home'">
+            sigmus nigrus ohius
+        </div>
+        <div v-else-if="activePage === 'announce'">
+            <announceContent/>
+        </div>
+        <div v-else-if="activePage === 'dm'">
+
+        </div>
+    </div>
+
+
+    <!-- <div>
+        <!- tabs menu ->
         <menu role="tablist" class="tab-menu">
             <li role="tab" aria-selected="true"><a href="#">awdawdaw</a></li>
             <li role="tab" aria-selected="false"><a href="#">wasss</a></li>
             <li role="tab" aria-selected="false"><a href="#">fvlkjkfdvbjvn</a></li>
         </menu>
-        <!-- main window -->
+        <!- main window ->
         <div class="window" role="tabpanel">
         <div class="title-bar" :class="{inactive: windowActive}">
         <div class="flex flex-row" style="gap: 4px;">
@@ -18,7 +31,7 @@
         <button aria-label="Close" disabled></button>
         </div>
         </div>
-        <!-- widow body count -->
+        <!- widow body count ->
         <div class="window-body">
 
         <div v-if="activePage === 'home'">
@@ -60,11 +73,15 @@
         </div>
         </div>
         </div>
-    </div>
+    </div> -->
 </template>
 
-<script>
+<script setup>
+import announceContent from './announcements/announceContent.vue';
 
+defineProps({
+    activePage: String
+})
 </script>
 
 <style lang="scss" scoped>

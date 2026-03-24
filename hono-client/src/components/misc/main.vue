@@ -2,7 +2,7 @@
 import { ref } from "vue"
 
 import Home from "./home.vue"
-import Announce from "./announce.vue"
+import Announce from "./announcements/announceContent.vue"
 import Messages from "./messages.vue"
 
 const tabs = [
@@ -23,7 +23,7 @@ const activeComponent = computed(() =>
 </script>
 <template>
 
-  <!-- WINDOW MENU SLOT -->
+  <!-- tab list stuff -->
   <template #windowMenu>
     <menu role="tablist" class="tab-menu">
       <li
@@ -39,7 +39,7 @@ const activeComponent = computed(() =>
     </menu>
   </template>
 
-  <!-- SWITCHED CONTENT -->
+  <!-- digga contenttT -->
   <component :is="activeComponent" />
 
 </template>

@@ -1,31 +1,43 @@
 <script setup>
 import { ref } from 'vue'
-import Window from './components/window.vue'
-import windowHome from './components/home.vue'
-import LoadingComp from './components/loading.vue'
-import LoginComp from './components/login.vue'
-import Home from './components/home.vue'
+import Window from './components/misc/window.vue'
+
+// windows content components
+import LoadingComp from './components/misc/loading.vue'
+import MainComp from './components/commSat.vue'
+import LoginComp from './components/user/login.vue'
+import RegisterComp from './components/user/register.vue'
 
 // loading winfowd
-const loading = ref(true);
 const windowActive = ref(true)
-function rasizmus(){
-  loading.value = false;
+function nacitalSomSa(){
+  windows.value = windows.value.filter(a => a.id !== 10)
+
+  windows.value.push(
+    { 
+      id: 1,
+      title: "CommSat",
+      component: MainComp,
+      active: false,
+      z: 0
+    },
+    {
+      id: 2,
+      title: "Log In",
+      component: LoginComp,
+      active: false,
+      z: 0
+    }
+  )
 }
 //windows (the os)
 const windows = ref([
   { 
-    id: 1,
-    title: "CommSat",
+    id: 10,
+    title: "Loading. . .",
+    component: LoadingComp,
     active: true,
     z: 1
-  },
-  {
-    id: 2,
-    title: "Log In",
-    component: LoginComp,
-    active: false,
-    z: 0
   }
 ])
 let topZ = 10;
@@ -100,8 +112,7 @@ function ChangePage(target){
       </template>
 
       <!-- content -->
-      <component :is="occ.component" />
-
+      <component :is="occ.component" :activePage="activePage" @loaded="nacitalSomSa"/>
       </Window>
     </div>
   <!-- <div style="position: absolute; left: 200px; top: 200px;">

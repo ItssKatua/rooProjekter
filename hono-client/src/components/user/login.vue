@@ -1,5 +1,5 @@
 <template>
-    <div class="window-body">
+    <div>
         <h4>Welcome back to <b>CommSat</b></h4>
         <br>
         <form>
@@ -27,10 +27,4 @@
 </script>
 
 <style>
-.windowLogin{
-    top: 400px;
-    left: 500px;
-    width: 320px;
-    z-index: 200;
-}
 </style>
