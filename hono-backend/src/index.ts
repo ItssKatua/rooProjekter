@@ -1,49 +1,24 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import * as z from 'zod'
 import { sValidator } from '@hono/standard-validator'
 
+import authRoute from './routes/auth.ts'
+import dmRoute from './routes/dm.ts'
+import employRoute from './routes/employees.ts'
+import postRoute from './routes/posts.ts'
+
 const app = new Hono()
-app.use(cors())
 
-const users = ['Martin', 'Stefan', 'Robert', 'Maros']
+app.use('*', cors())
 
-app.get('/users', (c) => {
-  return c.json(users)
-})
+app.route('/auth', authRoute)
+app.route('/employees', employRoute)
+app.route('/posts', postRoute)
+app.route('/dm', dmRoute)
 
-app.get('/users/:id', (c) => {
-  const id = parseInt(c.req.param('id'))
+export default app
 
-  if (Number.isNaN(id)) {
-    return c.text('Napisal si chujovinu')
-  }
-
-  return c.text(users[id])
-})
-
-const schema = z.object({
-  newUsername: z.email(),
-})
-
-app.post('/users', sValidator('json', schema), async (c) => {
-  const body = c.req.valid('json')
-  users.push(body.newUsername)
-  return c.text('ok')
-})
-
-app.delete('/users/:id', (c) => {
-  const id = parseInt(c.req.param('id'))
-
-  if (Number.isNaN(id)) {
-    return c.text('Napisal si chujovinu')
-  }
-
-  users.splice(id, 1)
-
-  return c.text('ok')
-})
 
 serve(
   {

@@ -74,7 +74,8 @@ const audioNotify = new Audio('/sound/notify.mp3')
 const tabs = [
   {name: "home", label: "Home"},
   {name: "announce", label: "Announcements"},
-  {name: "dm", label: "Messages"}
+  {name: "dm", label: "Messages"},
+  {name: "admin", label: "Admin"}
 ]
 const activePage = ref('home')
 
