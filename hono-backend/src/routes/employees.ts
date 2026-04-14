@@ -7,7 +7,7 @@ const employees = new Hono()
 employees.use('*', authService)
 
 // current user profile
-employees.get('/me', async (c) => {
+employees.get('/me', authService, async (c) => {
   const user = c.get('user')
 
   const rows: any = await query(`
@@ -21,14 +21,14 @@ employees.get('/me', async (c) => {
 })
 
 // get all emplkyeds
-employees.get('/', async () => {
+employees.get('/', async (c) => {
   const rows = await query(`
     SELECT e.id, e.first_name, e.last_name, e.email, d.name AS department
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
   `)
 
-  return rows
+  return c.json(rows)
 })
 
 // roles of emploey
