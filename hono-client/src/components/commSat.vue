@@ -1,18 +1,5 @@
-<template>
-    <div>
-        <div v-if="activePage === 'home'">
-            sigmus nigrus ohius
-        </div>
-        <div v-else-if="activePage === 'announce'">
-            <announceContent/>
-        </div>
-        <div v-else-if="activePage === 'dm'">
 
-        </div>
-    </div>
-
-
-    <!-- <div>
+<!-- <div>
         <!- tabs menu ->
         <menu role="tablist" class="tab-menu">
             <li role="tab" aria-selected="true"><a href="#">awdawdaw</a></li>
@@ -74,14 +61,26 @@
         </div>
         </div>
     </div> -->
+
+<template>
+    <div>
+        <div v-if="activePage == 'home'">
+            sigmus nigrus ohius
+        </div>
+        <div v-else-if="activePage === 'announce'">
+            john
+        </div>
+        <div v-else-if="activePage === 'dm'">
+
+        </div>
+    </div>
 </template>
 
 <script setup>
+import { inject } from 'vue';
 import announceContent from './announcements/announceContent.vue';
 
-defineProps({
-    activePage: String
-})
+const activePage = inject('activePage')
 </script>
 
 <style lang="scss" scoped>

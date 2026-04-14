@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { provide, ref } from 'vue'
 import Window from './components/misc/window.vue'
 
 // windows content components
@@ -30,7 +30,7 @@ function nacitalSomSa(){
     }
   )
 }
-//windows (the os)
+//windows
 const windows = ref([
   { 
     id: 10,
@@ -83,6 +83,8 @@ function ChangePage(target){
   activePage.value = target
 }
 
+provide('activePage', activePage)
+
 </script>
 
 
@@ -93,7 +95,7 @@ function ChangePage(target){
   <!-- <div v-else class="mainWindow"> -->
 
     <div class="desktop" @mousedown.self="focusDesktop">
-      <!-- main window -->
+      <!-- make windows for each window in winjdows -->
       <Window
         v-for="occ in windows"
         :key="occ.id"
@@ -102,39 +104,25 @@ function ChangePage(target){
         :z="occ.z"
         :imgsrc="occ.logo"
         @focus="focusWindow(occ.id)"
-        @close="closeWindow(occ.id)">
+        @close="closeWindow(occ.id)"
+      >
 
-      <template #windowMenu v-if="occ.id === 1">
-        <menu role="tablist" class="tab-menu">
-          <li v-for="tab in tabs" role="tab" :aria-selected="tab.name === activePage ? 'true' : 'false'">
-            <a href="#" @click.prevent="ChangePage(tab.name)">{{ tab.label }}</a>
-          </li>
-        </menu>
-      </template>
-
-      <!-- content -->
-      <component :is="occ.component" :activePage="activePage" @loaded="nacitalSomSa"/>
-      </Window>
-    </div>
-  <!-- <div style="position: absolute; left: 200px; top: 200px;">
-    <Window title="CommSat" imgsrc="/img/channels-5.png">
-      <-- the gigga chigga nigga ->
-      <template #windowMenu>
-        <menu role="tablist" class="tab-menu">
-            <li v-for="tab in tabs" role="tab" :aria-selected="tab.name === activePage ? 'true' : 'false'">
+        <!-- make the main window tabs :3 -->
+        <template #windowMenu v-if="occ.id === 1">
+          <menu role="tablist" class="tab-menu">
+            <li v-for="tab in tabs"
+            :key="tab.name"
+            role="tab"
+            :aria-selected="tab.name === activePage ? 'true' : 'false'">
               <a href="#" @click.prevent="ChangePage(tab.name)">{{ tab.label }}</a>
             </li>
-        </menu>
-      </template>
+          </menu>
+        </template>
 
-      <!- content ->
-      <template #default>
-        <windowHome/>
-      </template>
-    </Window>
-    <br><br>
-    <Home/>
-  </div> -->
+        <!-- content IDK MAN IGNORE TS IT BREAKS EVERYTHING-->
+        <component :is="occ.component" @loaded="nacitalSomSa"/>
+      </Window>
+    </div>
 </template>
 
 <style>

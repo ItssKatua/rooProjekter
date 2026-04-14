@@ -15,6 +15,9 @@ export default defineConfig({
         path.resolve(__dirname),
         path.resolve(__dirname, 'node_modules/98.css')
       ]
+    },
+    proxy: {
+      '/api': 'https://localhost:3000'
     }
   },
   resolve: {

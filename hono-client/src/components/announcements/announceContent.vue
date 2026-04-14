@@ -1,5 +1,6 @@
 <template>
     <div>
+        
         <announceCard poster="janko"/>
     </div>
 </template>
