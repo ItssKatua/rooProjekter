@@ -1,5 +1,5 @@
 <script setup>
-import { provide, ref } from 'vue'
+import { onMounted, provide, ref } from 'vue'
 import Window from './components/misc/window.vue'
 
 // windows content components
@@ -8,35 +8,8 @@ import MainComp from './components/commSat.vue'
 import LoginComp from './components/user/login.vue'
 import RegisterComp from './components/user/register.vue'
 
-// backend
-// communciation
-const api = async (url, options = {}) => {
-  const token = localStorage.getItem('token')
 
-  return fetch(`http://localhost:3000${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    }
-  }).then(res => res.json())
-}
-
-// login func
-const login = async () => {
-  const res = await api('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({
-      email: "emailemail",
-      password: "password"
-    })
-  })
-
-  console.log(res)
-
-  localStorage.setItem('token', res.token)
-}
-login()
+import { fetchUser } from './js/user.js'
 
 
 
@@ -118,6 +91,10 @@ function ChangePage(target){
 
 provide('activePage', activePage)
 
+
+onMounted(() => {
+  fetchUser();
+})
 </script>
 
 

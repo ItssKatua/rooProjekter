@@ -4,16 +4,16 @@ import { authService } from '../services/authService.ts'
 
 const employees = new Hono()
 
-employees.use('*', authService)
 
 // current user profile
 employees.get('/me', authService, async (c) => {
   const user = c.get('user')
 
   const rows: any = await query(`
-    SELECT e.*, d.name AS department_name
+    SELECT e.id, e.first_name, e.last_name, e.email, r.name AS role
     FROM employees e
-    LEFT JOIN departments d ON e.department_id = d.id
+    LEFT JOIN employee_roles er ON e.id = er.employee_id
+    LEFT JOIN roles r ON er.role_id = r.id
     WHERE e.id = ?
   `, [user.id])
 
@@ -21,7 +21,7 @@ employees.get('/me', authService, async (c) => {
 })
 
 // get all emplkyeds
-employees.get('/', async (c) => {
+employees.get('/employees', async (c) => {
   const rows = await query(`
     SELECT e.id, e.first_name, e.last_name, e.email, d.name AS department
     FROM employees e

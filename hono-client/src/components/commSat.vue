@@ -68,7 +68,7 @@
             sigmus nigrus ohius
         </div>
         <div v-else-if="activePage === 'announce'">
-            john
+            <announceContent/>
         </div>
         <div v-else-if="activePage === 'dm'">
 
