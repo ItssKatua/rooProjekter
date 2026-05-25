@@ -52,3 +52,7 @@ html body {
 :root {
     --font-sans-serif: "MS Sans Serif";
 }
+
+body {
+    padding-bottom: 0;
+}

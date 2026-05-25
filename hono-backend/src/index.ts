@@ -1,7 +1,8 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { sValidator } from '@hono/standard-validator'
+import { upgradeWebSocket } from '@hono/node-server'
+
 import type { Variables } from './types.ts'
 
 import authRoute from './routes/authRoute.ts'
@@ -11,15 +12,22 @@ import postRoute from './routes/posts.ts'
 
 const app = new Hono<{ Variables: Variables }>()
 
-app.use('*', cors())
+app.use(
+  '*',
+  cors({
+    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+    allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  })
+)
 
 app.route('/auth', authRoute)
 app.route('/employees', employRoute)
 app.route('/posts', postRoute)
 app.route('/dm', dmRoute)
 
-export default app
-
+app.get('/health', (c) => c.json({ ok: true }))
 
 serve(
   {
@@ -27,6 +35,8 @@ serve(
     port: 3000,
   },
   (info) => {
-    console.log(`Server is running on http://localhost:${info.port}`)
-  },
+    console.log(`Server running on http://localhost:${info.port}`)
+  }
 )
+
+export default app

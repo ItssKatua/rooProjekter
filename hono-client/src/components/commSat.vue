@@ -1,88 +1,34 @@
-
-<!-- <div>
-        <!- tabs menu ->
-        <menu role="tablist" class="tab-menu">
-            <li role="tab" aria-selected="true"><a href="#">awdawdaw</a></li>
-            <li role="tab" aria-selected="false"><a href="#">wasss</a></li>
-            <li role="tab" aria-selected="false"><a href="#">fvlkjkfdvbjvn</a></li>
-        </menu>
-        <!- main window ->
-        <div class="window" role="tabpanel">
-        <div class="title-bar" :class="{inactive: windowActive}">
-        <div class="flex flex-row" style="gap: 4px;">
-        <img src="/img/channels-5.png" alt="">
-        <div class="title-bar-text">CommSat</div>
-        </div>
-        <div class="title-bar-controls">
-        <button aria-label="Maximize" disabled></button>
-        <button aria-label="Close" disabled></button>
-        </div>
-        </div>
-        <!- widow body count ->
-        <div class="window-body">
-
-        <div v-if="activePage === 'home'">
-        <h3>Hello, {{user.name}}</h3>
-        <fieldset style="width:fit-content;">
-        <legend>My status</legend>
-        <div class="field-row">
-        <div class="field-row">
-        <input id="radio10" type="radio" name="fieldset-example" checked="checked" v-model="userStatus" value="Online" :disabled="windowActive">
-        <label for="radio10">Online</label>
-        </div>
-        <div class="field-row">
-        <input id="radio11" type="radio" name="fieldset-example" v-model="userStatus" value="Away" :disabled="windowActive">
-        <label for="radio11">Away</label>
-        </div>
-        <div class="field-row">
-        <input id="radio12" type="radio" name="fieldset-example" v-model="userStatus" value="Busy" :disabled="windowActive">
-        <label for="radio12">Busy</label>
-        </div>
-        <div class="field-row">
-        <input id="radio13" type="radio" name="fieldset-example" v-model="userStatus" value="DND" :disabled="windowActive">
-        <label for="radio13">DND</label>
-        </div>
-        </div>
-        </fieldset>
-        {{ userStatus }}
-
-        <button :disabled="windowActive">click me</button>
-        <button v-on:click="sigma()">aasa</button>
-        </div>
-
-        <div v-if="activePage === 'announce'">
-        <button @click="() => audioTadaa.play()">tada</button>
-        </div>
-
-        <div v-if="activePage === 'dm'">
-        <a href="">Text john</a>
-        <button @click="() => audioNotify.play()">dindon</button>
-        </div>
-        </div>
-        </div>
-    </div> -->
-
 <template>
     <div>
-        <div v-if="activePage == 'home'">
-            sigmus nigrus ohius
-        </div>
-        <div v-else-if="activePage === 'announce'">
-            <announceContent/>
-        </div>
-        <div v-else-if="activePage === 'dm'">
+        <HomeTab v-if="activePage === 'home'" />
+        <AnnounceContent v-else-if="activePage === 'announce'" />
+        <MessagesList v-else-if="activePage === 'dm'" @open-chat="onOpenChat"/>
+        <AdminPanel v-else-if="activePage === 'admin'" />
+    </div>
 
-        </div>
+    <div class="status-bar">
+        <p class="status-bar-field">
+            {{ statusIcon }} {{ currentUser?.first_name }} {{ currentUser?.last_name }}
+        </p>
+        <p class="status-bar-field">{{ currentUser?.department || 'No Dept.' }}</p>
+        <p class="status-bar-field">{{ currentUser?.roles?.join(', ') || '' }}</p>
     </div>
 </template>
 
 <script setup>
-import { inject } from 'vue';
-import announceContent from './announcements/announceContent.vue';
-
-const activePage = inject('activePage')
+import { computed } from 'vue'
+import { currentUser } from '../js/user.js'
+ 
+import HomeTab        from './misc/home.vue'
+import AnnounceContent from './announcements/announceContent.vue'
+import MessagesList   from './messages/MessagesList.vue'
+import AdminPanel     from './admin/AdminPanel.vue'
+ 
+defineProps({ activePage: { type: String, default: 'home' } })
+defineEmits(['open-chat'])
+ 
+const statusIcon = computed(() => {
+  const s = currentUser.value?.status
+  return { online: '🟢', busy: '🔴', away: '🟡', invisible: '⚫' }[s] || '⚫'
+})
 </script>
-
-<style lang="scss" scoped>
-
-</style>
