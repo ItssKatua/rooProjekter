@@ -147,7 +147,7 @@ employees.patch('/admin/:id', authService, requireAdmin, async (c) => {
   await query(
     `INSERT INTO activity_logs (employee_id, action, endpoint, method, ip_address, created_at)
      VALUES (?, ?, ?, ?, ?, NOW())`,
-    [admin.id, `Admin #${admin.id} updated employee #${id}`, `/employees/admin/${id}`, 'PATCH', c.req.header('x-forwarded-for') || 'unknown']
+    [admin.id, `Admin updated employee #${id}`, `/employees/admin/${id}`, 'PATCH', c.req.header('x-forwarded-for') || 'unknown']
   ).catch(() => { })
 
   return c.json({ success: true })
@@ -160,7 +160,7 @@ employees.post('/admin/:id/logout', authService, requireAdmin, async (c) => {
   await query(
     `INSERT INTO activity_logs (employee_id, action, endpoint, method, ip_address, created_at)
      VALUES (?, ?, ?, ?, ?, NOW())`,
-    [admin.id, `Admin #${admin.id} logged out employee #${id}`, `/employees/admin/${id}/logout`, 'POST', 'unknown']
+    [admin.id, `Admin logged out employee #${id}`, `/employees/admin/${id}/logout`, 'POST', 'unknown']
   ).catch(() => { })
   return c.json({ success: true })
 })
