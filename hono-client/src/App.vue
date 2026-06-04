@@ -266,13 +266,13 @@ onUnmounted(() => clearInterval(clockTimer))
         v-if="authView === 'login'"
         @logged-in="onLoggedIn"
         @error="openError"
-        @switch-to-register="authView = 'register'"
+        @register="authView = 'register'"
       />
       <RegisterComp
         v-else
         @registered="onRegistered"
         @error="openError"
-        @switch-to-login="authView = 'login'"
+        @login="authView = 'login'"
       />
     </window>
  
