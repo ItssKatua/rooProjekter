@@ -57,9 +57,6 @@ function openError(msg) {
   audioChime.play().catch(() => {})
 }
 
-function focusDesktop() {
-  windows.value.forEach(e => e.active = false)
-}
 
 // loaded
 async function onLoaded() {
@@ -136,12 +133,12 @@ function openChat({ roomId, otherUser }) {
 }
 
 //clock
-const clock = ref('')
-function updateClock() {
-  clock.value = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-updateClock()
-const clockTimer = setInterval(updateClock, 1000)
+//const clock = ref('')
+//function updateClock() {
+//  clock.value = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+//}
+//updateClock()
+//const clockTimer = setInterval(updateClock, 1000)
 
 provide('openChat', openChat)
 
@@ -149,7 +146,7 @@ onMounted(() => {
   audioChime.load()
   audioNotify.load()
 })
-onUnmounted(() => clearInterval(clockTimer))
+//onUnmounted(() => clearInterval(clockTimer))
 
 // import { onMounted, provide, ref } from 'vue'
 // import Window from './components/misc/window.vue'

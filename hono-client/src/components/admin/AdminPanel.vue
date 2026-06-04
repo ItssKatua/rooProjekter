@@ -41,7 +41,7 @@
       </div>
 
       <!-- Edit panel -->
-        <fieldset>
+        <fieldset v-if="selected">
           <legend>Edit: {{ selected.first_name }} {{ selected.last_name }}</legend>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
