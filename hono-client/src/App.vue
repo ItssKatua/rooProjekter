@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, provide } from 'vue'
-import window from './components/misc/window.vue'
+import importWindow from './components/misc/window.vue'
 import LoadingComp from './components/misc/loading.vue'
 import LoginComp from './components/user/login.vue'
 import RegisterComp from './components/user/register.vue'
@@ -50,13 +50,41 @@ function closeWindow(id) {
   windows.value = windows.value.filter(w => w.id !== id)
 }
  
+//rorr
+const dialogMode = ref('alert') // 'alert' | 'confirm'
+let resolveDialog = null
+
 function openError(msg) {
   errorMessage.value = msg
+  dialogMode.value = 'alert'
   showError.value = true
   audioChime.currentTime = 0
   audioChime.play().catch(() => {})
 }
 
+function openErrorConfirm(msg) {
+  errorMessage.value = msg
+  dialogMode.value = 'confirm'
+  showError.value = true
+  audioChime.currentTime = 0
+  audioChime.play().catch(() => {})
+  console.error("gjkaweqngnrsig");
+  
+
+  return new Promise((resolve) => {
+    resolveDialog = resolve
+  })
+}
+
+function closeError(result = false) {
+  showError.value = false
+  resolveDialog?.(result)
+  resolveDialog = null
+}
+
+provide('openError', openError)
+provide('openErrorConfirm', openErrorConfirm)
+provide('closeError', closeError)
 
 // loaded
 async function onLoaded() {
@@ -103,8 +131,6 @@ function openMainWindow() {
     type: 'main',
     active: true,
     z: ++topZ,
-    x: 80,
-    y: 60,
     width: '660px',
   })
 }
@@ -123,8 +149,6 @@ function openChat({ roomId, otherUser }) {
     type: 'chat',
     active: true,
     z: ++topZ,
-    x: 120 + offset,
-    y: 120 + offset,
     roomId,
     otherUser,
     width: '360px',
@@ -228,34 +252,41 @@ onMounted(() => {
 // onMounted(() => {
 //   fetchUser();
 // })
+const icenterX = computed(() =>
+  typeof window !== "undefined" ? (window.innerWidth - 320) / 2 : 0
+)
+
+const icenterY = computed(() =>
+  typeof window !== "undefined" ? (window.innerHeight - 200) / 2 : 0
+)
 </script>
 
 <template>
   <div class="desktop" @mousedown="focusDesktop">
  
     <!-- loading-->
-    <window
+    <importWindow
       v-if="appState === 'loading'"
       title="Loading. . ."
       :active="true"
       :z="200"
-      :initialX="Math.round((typeof window !== 'undefined' ? window.innerWidth - 400 : 800) / 2 - 200)"
-      :initialY="Math.round((typeof window !== 'undefined' ? window.innerHeight - 200 : 600) / 2 - 100)"
+      :initialX="icenterX"
+      :initialY="icenterY"
       width="320px"
       :minWidth="'320px'"
     >
       <LoadingComp @loaded="onLoaded" />
-    </window>
+    </importWindow>
  
     <!-- auto(rizzacia) 🚗🚗🚗🏎🏎🚔🏎🚗🚙🚋🚘🚓🚡-->
-    <window
+    <importWindow
       v-if="appState === 'auth'"
       :title="authView === 'login' ? 'Log In' : 'Register'"
       imgsrc="/img/channels-5.png"
       :active="true"
       :z="150"
-      :initialX="Math.round((typeof window !== 'undefined' ? window.innerWidth : 800) / 2 - 170)"
-      :initialY="Math.round((typeof window !== 'undefined' ? window.innerHeight : 600) / 2 - 140)"
+      :initialX="icenterX"
+      :initialY="icenterY"
       width="340px"
       :minWidth="'300px'"
     >
@@ -271,19 +302,19 @@ onMounted(() => {
         @error="openError"
         @login="authView = 'login'"
       />
-    </window>
+    </importWindow>
  
     <!-- apkilacia -->
     <template v-if="appState === 'app'">
       <template v-for="win in windows" :key="win.id">
  
-        <window
+        <importWindow
           v-if="win.type === 'main'"
           :title="win.title"
           :active="win.active"
           :z="win.z"
-          :initialX="win.x"
-          :initialY="win.y"
+          :initialX="icenterX - 200"
+          :initialY="icenterY - 200"
           :width="win.width"
           bodyOverflow="auto"
           @focus="focusWindow(win.id)"
@@ -304,21 +335,21 @@ onMounted(() => {
  
           
           <CommSatComp :activePage="activePage" @open-chat="openChat" />
-        </window>
+        </importWindow>
  
-        <window
+        <importWindow
           v-else-if="win.type === 'chat'"
           :title="win.title"
           :active="win.active"
           :z="win.z"
-          :initialX="win.x"
-          :initialY="win.y"
+          :initialX="icenterX + offset"
+          :initialY="icenterY + offset"
           :width="win.width"
           @focus="focusWindow(win.id)"
           @close="closeWindow(win.id)"
         >
           <ChatWindow :roomId="win.roomId" :otherUser="win.otherUser" />
-      </window>
+      </importWindow>
  
       </template>
     </template>
@@ -327,7 +358,10 @@ onMounted(() => {
     <ErrorDialog
       v-if="showError"
       :message="errorMessage"
-      @close="showError = false"
+      :mode="dialogMode"
+      :initialX="icenterX"
+      :initialY="icenterY"
+      @close="(result) => closeError(result)"
     />
  
     <!-- task -->

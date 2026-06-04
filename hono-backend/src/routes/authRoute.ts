@@ -59,7 +59,7 @@ auth.post('/login', async (c) => {
 
   const users: any = await query(`SELECT * FROM employees WHERE email = ?`, [email])
   const user = users[0]
-  if (!user) return c.json({ error: 'User not found' }, 401)
+  if (!user) return c.json({ error: 'User not found' }, 404)
 
   const valid = await bcrypt.compare(password, user.password_hash)
   if (!valid) return c.json({ error: 'Invalid password' }, 401)

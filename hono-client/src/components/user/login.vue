@@ -47,7 +47,7 @@ const loading = ref(false)
  
 async function doLogin() {
     if (!email.value || !password.value) {
-        emit('error', 'Please enter email and password.')
+        emit('error', 'All fields are required.')
         return
     }
     loading.value = true
