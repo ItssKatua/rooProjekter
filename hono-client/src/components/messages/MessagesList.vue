@@ -62,6 +62,7 @@ function selectEmp(emp) {
 async function openChat(emp) {
   if (!emp || emp.id === currentUser.value?.id) return
   try {
+    
     const res = await api('/dm/room', {
       method: 'POST',
       body: JSON.stringify({ user_id: emp.id }),

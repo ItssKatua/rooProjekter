@@ -149,6 +149,8 @@ function openChat({ roomId, otherUser }) {
     type: 'chat',
     active: true,
     z: ++topZ,
+    initialX: icenterX,
+    initialY: icenterY,
     roomId,
     otherUser,
     width: '360px',
@@ -342,8 +344,8 @@ const icenterY = computed(() =>
           :title="win.title"
           :active="win.active"
           :z="win.z"
-          :initialX="icenterX + offset"
-          :initialY="icenterY + offset"
+          :initialX="icenterX"
+          :initialY="icenterY"
           :width="win.width"
           @focus="focusWindow(win.id)"
           @close="closeWindow(win.id)"

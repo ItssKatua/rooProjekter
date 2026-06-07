@@ -113,7 +113,7 @@ dm.get('/:room_id/messages', authService, async (c) => {
   const user = c.get('user')
 
   const check: any = await query(
-    `SELECT id
+    `SELECT employee_id
      FROM dm_participants
      WHERE dm_room_id = ?
        AND employee_id = ?`,
@@ -156,7 +156,7 @@ dm.post('/:room_id/messages', authService, async (c) => {
   }
 
   const check: any = await query(
-    `SELECT id
+    `SELECT employee_id
      FROM dm_participants
      WHERE dm_room_id = ?
        AND employee_id = ?`,
@@ -211,13 +211,16 @@ dm.get(
   '/:room_id/ws',
   authService,
   upgradeWebSocket((c: Context) => {
+    console.log('upgrade start')
     const roomId = c.req.param('room_id')!
     const user = c.get('user')
+    console.log({ roomId, user })
 
     return {
       async onOpen(_event: any, ws: any) {
+        console.log('onOpen fired')
         const check: any = await query(
-          `SELECT id
+          `SELECT employee_id
            FROM dm_participants
            WHERE dm_room_id = ?
              AND employee_id = ?`,

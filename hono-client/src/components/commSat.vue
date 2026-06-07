@@ -2,7 +2,7 @@
     <div>
         <HomeTab v-if="activePage === 'home'" />
         <AnnounceContent v-else-if="activePage === 'announce'" />
-        <MessagesList v-else-if="activePage === 'dm'" @open-chat="onOpenChat"/>
+        <MessagesList v-else-if="activePage === 'dm'" @open-chat="$emit('open-chat', $event)"/>
         <AdminPanel v-else-if="activePage === 'admin'" />
     </div>
 
