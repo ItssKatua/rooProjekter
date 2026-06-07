@@ -3,7 +3,7 @@ import { upgradeWebSocket } from '@hono/node-server'
 import { query } from '../db.ts'
 import { authService } from '../services/authService.ts'
 import { Context } from 'hono'
-
+type WSUpgrader = typeof import('@hono/node-server').upgradeWebSocket
 const dm = new Hono()
 
 type Client = {
@@ -209,16 +209,23 @@ dm.post('/:room_id/messages', authService, async (c) => {
 // websocket endpoint
 dm.get(
   '/:room_id/ws',
+  async (c, next) => {
+    const qToken = c.req.query('token')
+    if (qToken) {
+      const orig = c.req.raw.headers
+      const newHeaders = new Headers(orig)
+      newHeaders.set('authorization', `Bearer ${qToken}`)
+      Object.defineProperty(c.req.raw, 'headers', { value: newHeaders, configurable: true })
+    }
+    await next()
+  },
   authService,
   upgradeWebSocket((c: Context) => {
-    console.log('upgrade start')
     const roomId = c.req.param('room_id')!
     const user = c.get('user')
-    console.log({ roomId, user })
 
     return {
       async onOpen(_event: any, ws: any) {
-        console.log('onOpen fired')
         const check: any = await query(
           `SELECT employee_id
            FROM dm_participants

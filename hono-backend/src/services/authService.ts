@@ -5,8 +5,6 @@ import type { Variables } from '../types.ts'
 export const JWT_SECRET = process.env.JWT_SECRET || 'sigmaheslo'
 
 export async function authService(c: Context<{ Variables: Variables }>, next: Next) {
-  console.log('Authorization:', c.req.header('Authorization'))
-  console.log('Query token:', c.req.query('token'))
   const headerToken = c.req.header('Authorization')?.replace('Bearer ', '')
   const queryToken = c.req.query('token')
   const token = headerToken || queryToken
