@@ -59,6 +59,7 @@ import { ref, computed, onMounted, inject } from 'vue'
 import Post from './Post.vue'
 import { api } from '../../js/api.js'
 import { currentUser } from '../../js/user.js'
+import { useSSE } from '../../js/sse.js'
 
 const openError = inject('openError', null)
 const openErrorConfirm = inject('openErrorConfirm', null)
@@ -103,7 +104,7 @@ async function submitPost() {
     newTitle.value = ''
     newContent.value = ''
     pinNew.value = false
-    await loadPosts()
+    // SSE will push the new post; no need to reload
   } catch (err) {
     openError?.('Failed to post: ' + err.message)
   } finally {
@@ -117,7 +118,7 @@ async function handleReact(postId) {
       method: 'POST',
       body: JSON.stringify({ type: 'like' }),
     })
-    // update locally for instant feedback
+    // SSE will broadcast the reaction count; also update locally for instant feedback
     const post = posts.value.find(p => p.id === postId)
     if (post) {
       if (post.user_reacted) {
@@ -138,6 +139,7 @@ async function handleDelete(postId) {
   if (!ok) return
   try {
     await api(`/posts/${postId}`, { method: 'DELETE' })
+    // SSE will remove it; also update locally immediately
     posts.value = posts.value.filter(p => p.id !== postId)
   } catch (err) {
     openError?.('Failed to delete: ' + err.message)
@@ -150,10 +152,9 @@ async function handleTogglePin(post) {
       method: 'PATCH',
       body: JSON.stringify({ pinned: !post.pinned }),
     })
-    // optimistic update
+    // SSE will update; also optimistic local update
     const p = posts.value.find(p => p.id === post.id)
     if (p) p.pinned = !post.pinned
-    // re-sort (pinned posts should come first)
     posts.value.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
   } catch (err) {
     openError?.('Failed to toggle pin: ' + err.message)
@@ -161,12 +162,47 @@ async function handleTogglePin(post) {
 }
 
 async function handleReactComment(commentId) {
-  // Comment reactions aren't in the current backend schema but can be added later
-  // For now just a no-op (the reactions table only links to post_id or comment_id)
-  try {
-    // Future: await api(`/posts/comments/${commentId}/react`, ...)
-  } catch {}
+  // Future: comment reactions
 }
+
+// SSE: live post feed updates
+useSSE({
+  'post:created': (data) => {
+    if (!posts.value.find(p => p.id === data.id)) {
+      // pinned posts go first
+      if (data.pinned) {
+        posts.value.unshift(data)
+      } else {
+        const firstUnpinned = posts.value.findIndex(p => !p.pinned)
+        if (firstUnpinned === -1) {
+          posts.value.push(data)
+        } else {
+          posts.value.splice(firstUnpinned, 0, data)
+        }
+      }
+    }
+  },
+  'post:updated': (data) => {
+    const p = posts.value.find(p => p.id === data.id)
+    if (p) {
+      Object.assign(p, data)
+      posts.value.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+    }
+  },
+  'post:deleted': (data) => {
+    posts.value = posts.value.filter(p => p.id !== data.id)
+  },
+  'post:reacted': (data) => {
+    const p = posts.value.find(p => p.id === data.postId)
+    if (p) {
+      p.reaction_count = data.reactionCount
+      // update user_reacted only for the current user
+      if (data.employeeId === currentUser.value?.id) {
+        p.user_reacted = data.removed ? 0 : 1
+      }
+    }
+  },
+})
 
 onMounted(loadPosts)
 </script>

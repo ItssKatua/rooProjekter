@@ -9,6 +9,7 @@ import authRoute from './routes/authRoute.ts'
 import dmRoute from './routes/dm.ts'
 import employRoute from './routes/employees.ts'
 import postRoute from './routes/posts.ts'
+import sseRoute from './routes/sseRoute.ts'
 
 const app = new Hono<{ Variables: Variables }>()
 
@@ -26,6 +27,7 @@ app.route('/auth', authRoute)
 app.route('/employees', employRoute)
 app.route('/posts', postRoute)
 app.route('/dm', dmRoute)
+app.route('/sse', sseRoute)
 
 app.get('/health', (c) => c.json({ ok: true }))
 

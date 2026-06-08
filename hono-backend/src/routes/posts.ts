@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { query } from '../db.ts'
 import { authService } from '../services/authService.ts'
+import { broadcast } from '../sse.ts'
 
 const posts = new Hono()
 
@@ -25,49 +26,62 @@ posts.get('/', authService, async (c) => {
 // create post (management or admin only)
 posts.post('/', authService, async (c) => {
   const user = c.get('user')
- 
+
   const roles: any = await query(
     `SELECT r.name FROM employee_roles er JOIN roles r ON er.role_id = r.id WHERE er.employee_id = ?`,
     [user.id]
   )
   const allowed = roles.some((r: any) => ['management', 'admin'].includes(r.name))
   if (!allowed) return c.json({ error: 'Forbidden' }, 403)
- 
+
   const { title, content, pinned } = await c.req.json()
   if (!title || !content) return c.json({ error: 'Title and content required' }, 400)
- 
-  await query(
+
+  const result: any = await query(
     `INSERT INTO posts (title, content, author_id, pinned, created_at, updated_at)
      VALUES (?, ?, ?, ?, NOW(), NOW())`,
     [title, content, user.id, pinned ? 1 : 0]
   )
+
+  const newPosts: any = await query(
+    `SELECT p.*, e.first_name, e.last_name,
+      0 AS comment_count, 0 AS reaction_count, 0 AS user_reacted
+     FROM posts p JOIN employees e ON p.author_id = e.id
+     WHERE p.id = ?`,
+    [result.insertId]
+  )
+  broadcast('post:created', newPosts[0])
+
   return c.json({ success: true })
 })
 
 posts.patch('/:id', authService, async (c) => {
   const user = c.get('user')
   const id = c.req.param('id')
- 
+
   const roles: any = await query(
     `SELECT r.name FROM employee_roles er JOIN roles r ON er.role_id = r.id WHERE er.employee_id = ?`,
     [user.id]
   )
   const allowed = roles.some((r: any) => ['management', 'admin'].includes(r.name))
   if (!allowed) return c.json({ error: 'Forbidden' }, 403)
- 
+
   const body = await c.req.json()
   const updates: string[] = []
   const params: any[] = []
- 
+
   if (body.pinned !== undefined) { updates.push('pinned = ?'); params.push(body.pinned ? 1 : 0) }
   if (body.title !== undefined)  { updates.push('title = ?');  params.push(body.title) }
   if (body.content !== undefined){ updates.push('content = ?'); params.push(body.content) }
- 
+
   if (updates.length === 0) return c.json({ error: 'Nothing to update' }, 400)
- 
+
   updates.push('updated_at = NOW()')
   params.push(id)
   await query(`UPDATE posts SET ${updates.join(', ')} WHERE id = ?`, params)
+
+  broadcast('post:updated', { id: Number(id), ...body })
+
   return c.json({ success: true })
 })
 
@@ -75,24 +89,27 @@ posts.patch('/:id', authService, async (c) => {
 posts.delete('/:id', authService, async (c) => {
   const user = c.get('user')
   const id = c.req.param('id')
- 
+
   const posts_: any = await query(`SELECT * FROM posts WHERE id = ?`, [id])
   const post = posts_[0]
   if (!post) return c.json({ error: 'Not found' }, 404)
- 
+
   const roles: any = await query(
     `SELECT r.name FROM employee_roles er JOIN roles r ON er.role_id = r.id WHERE er.employee_id = ?`,
     [user.id]
   )
   const isPrivileged = roles.some((r: any) => ['management', 'admin'].includes(r.name))
- 
+
   if (post.author_id !== user.id && !isPrivileged) {
     return c.json({ error: 'Forbidden' }, 403)
   }
- 
+
   await query(`DELETE FROM reactions WHERE post_id = ?`, [id])
   await query(`DELETE FROM comments WHERE post_id = ?`, [id])
   await query(`DELETE FROM posts WHERE id = ?`, [id])
+
+  broadcast('post:deleted', { id: Number(id) })
+
   return c.json({ success: true })
 })
 
@@ -115,37 +132,54 @@ posts.post('/:id/comments', authService, async (c) => {
   const postId = c.req.param('id')
   const { content, parent_id } = await c.req.json()
   const user = c.get('user')
- 
+
   if (!content) return c.json({ error: 'Content required' }, 400)
- 
-  await query(
+
+  const result: any = await query(
     `INSERT INTO comments (post_id, content, parent_comment_id, author_id, created_at, updated_at)
      VALUES (?, ?, ?, ?, NOW(), NOW())`,
     [postId, content, parent_id || null, user.id]
   )
+
+  const newComments: any = await query(
+    `SELECT c.*, e.first_name, e.last_name FROM comments c
+     JOIN employees e ON c.author_id = e.id
+     WHERE c.id = ?`,
+    [result.insertId]
+  )
+
+  broadcast('comment:created', {
+    postId: Number(postId),
+    comment: newComments[0],
+  })
+
   return c.json({ success: true })
 })
 
 // delete comment
 posts.delete('/:postId/comments/:commentId', authService, async (c) => {
   const user = c.get('user')
+  const postId = c.req.param('postId')
   const commentId = c.req.param('commentId')
- 
+
   const comments: any = await query(`SELECT * FROM comments WHERE id = ?`, [commentId])
   const comment = comments[0]
   if (!comment) return c.json({ error: 'Not found' }, 404)
- 
+
   const roles: any = await query(
     `SELECT r.name FROM employee_roles er JOIN roles r ON er.role_id = r.id WHERE er.employee_id = ?`,
     [user.id]
   )
   const isPrivileged = roles.some((r: any) => ['management', 'admin'].includes(r.name))
- 
+
   if (comment.author_id !== user.id && !isPrivileged) {
     return c.json({ error: 'Forbidden' }, 403)
   }
- 
+
   await query(`DELETE FROM comments WHERE id = ?`, [commentId])
+
+  broadcast('comment:deleted', { postId: Number(postId), commentId: Number(commentId) })
+
   return c.json({ success: true })
 })
 
@@ -154,23 +188,37 @@ posts.post('/:id/react', authService, async (c) => {
   const postId = c.req.param('id')
   const { type } = await c.req.json()
   const user = c.get('user')
- 
+
   const existing: any = await query(
     `SELECT * FROM reactions WHERE post_id = ? AND employee_id = ?`,
     [postId, user.id]
   )
- 
+
+  let removed = false
   if (existing.length) {
     await query(`DELETE FROM reactions WHERE id = ?`, [existing[0].id])
-    return c.json({ removed: true })
+    removed = true
+  } else {
+    await query(
+      `INSERT INTO reactions (post_id, employee_id, type, created_at)
+       VALUES (?, ?, ?, NOW())`,
+      [postId, user.id, type || 'like']
+    )
   }
- 
-  await query(
-    `INSERT INTO reactions (post_id, employee_id, type, created_at)
-     VALUES (?, ?, ?, NOW())`,
-    [postId, user.id, type || 'like']
+
+  const countResult: any = await query(
+    `SELECT COUNT(*) AS cnt FROM reactions WHERE post_id = ?`,
+    [postId]
   )
-  return c.json({ added: true })
+
+  broadcast('post:reacted', {
+    postId: Number(postId),
+    removed,
+    employeeId: user.id,
+    reactionCount: countResult[0].cnt,
+  })
+
+  return c.json({ removed })
 })
 
 export default posts

@@ -34,3 +34,17 @@ export const logout = () => {
     apiLogout()
     currentUser.value = null
 }
+
+/**
+ * Apply an SSE employee:admin-updated payload to currentUser if it matches.
+ * Called from App.vue which has the global SSE connection.
+ */
+export const applyAdminUpdate = (data) => {
+    if (!currentUser.value || currentUser.value.id !== data.id) return
+    if (data.first_name !== undefined) currentUser.value.first_name = data.first_name
+    if (data.last_name !== undefined) currentUser.value.last_name = data.last_name
+    if (data.email !== undefined) currentUser.value.email = data.email
+    if (data.roles !== undefined) currentUser.value.roles = data.roles
+    // Re-fetch full profile to get department name etc.
+    fetchUser()
+}

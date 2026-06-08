@@ -44,7 +44,7 @@
       style="padding: 2px 8px 4px; font-size:10px; color:#555; cursor:pointer; display:flex; gap:8px; user-select:none;"
       @click="toggleExpand"
     >
-      <span>💬 {{ post.comment_count || 0 }} comment{{ post.comment_count !== 1 ? 's' : '' }}</span>
+      <span>💬 {{ localCommentCount }} comment{{ localCommentCount !== 1 ? 's' : '' }}</span>
       <span style="color:navy;">{{ expanded ? '▲ hide' : '▼ show comments' }}</span>
     </div>
 
@@ -91,16 +91,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import Comment from './Comment.vue'
 import { api } from '../../js/api.js'
+import { useSSE } from '../../js/sse.js'
 
 const props = defineProps({
   post: { type: Object, required: true },
   currentUser: { type: Object, default: null },
   isAdmin: { type: Boolean, default: false },
   canManage: { type: Boolean, default: false },
-  // optional: full employee list for department lookup
   employees: { type: Array, default: () => [] },
 })
 
@@ -111,11 +111,12 @@ const comments = ref([])
 const loadingComments = ref(false)
 const newComment = ref('')
 const submittingComment = ref(false)
+// track comment count locally so SSE can update it without a full reload
+const localCommentCount = ref(props.post.comment_count || 0)
 
-// try to get department from post data (joined in query) or from employees list
-const postDepartment = computed(() => {
-  return props.post.department || null
-})
+watch(() => props.post.comment_count, (v) => { localCommentCount.value = v ?? 0 })
+
+const postDepartment = computed(() => props.post.department || null)
 
 const canDelete = computed(() =>
   props.isAdmin ||
@@ -159,8 +160,11 @@ async function submitComment() {
       body: JSON.stringify({ content, parent_id: null }),
     })
     newComment.value = ''
-    await loadComments()
-    emit('refresh')
+    // DO NOT toggle expanded — SSE will push the new comment in
+    // but if SSE isn't available yet, reload manually
+    if (!expanded.value) {
+      // comments section is closed, just let SSE update count
+    }
   } catch (err) {
     console.error(err)
   } finally {
@@ -171,12 +175,35 @@ async function submitComment() {
 async function handleDeleteComment(commentId) {
   try {
     await api(`/posts/${props.post.id}/comments/${commentId}`, { method: 'DELETE' })
-    await loadComments()
+    // SSE will remove it; also update locally immediately
+    comments.value = comments.value.filter(c => c.id !== commentId)
+    localCommentCount.value = Math.max(0, localCommentCount.value - 1)
     emit('refresh')
   } catch (err) {
     console.error(err)
   }
 }
+
+// SSE: live comment updates for THIS post only
+useSSE({
+  'comment:created': (data) => {
+    if (data.postId !== props.post.id) return
+    localCommentCount.value++
+    if (expanded.value) {
+      // avoid duplicate if we somehow already have it
+      if (!comments.value.find(c => c.id === data.comment.id)) {
+        comments.value.push(data.comment)
+      }
+    }
+  },
+  'comment:deleted': (data) => {
+    if (data.postId !== props.post.id) return
+    localCommentCount.value = Math.max(0, localCommentCount.value - 1)
+    if (expanded.value) {
+      comments.value = comments.value.filter(c => c.id !== data.commentId)
+    }
+  },
+})
 </script>
 
 <style scoped>

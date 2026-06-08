@@ -7,8 +7,9 @@ import RegisterComp from './components/user/register.vue'
 import CommSatComp from './components/commSat.vue'
 import ChatWindow from './components/messages/ChatWindow.vue'
 import ErrorDialog from './components/misc/ErrorDialog.vue'
-import { fetchUser, currentUser, logout } from './js/user.js'
+import { fetchUser, currentUser, logout, applyAdminUpdate } from './js/user.js'
 import { getToken } from './js/api.js'
+import { useSSE } from './js/sse.js'
 
 // audio
 const audioChime  = new Audio('/sound/chime.mp3')
@@ -142,7 +143,7 @@ function openChat({ roomId, otherUser }) {
     focusWindow(chatId)
     return
   }
-  const offset = windows.value.filter(w => w.type === 'chat').length * 24
+
   windows.value.push({
     id: chatId,
     title: `Chat - ${otherUser.first_name} ${otherUser.last_name}`,
@@ -173,6 +174,29 @@ onMounted(() => {
   audioNotify.load()
 })
 onUnmounted(() => clearInterval(clockTimer))
+
+// Global SSE listeners — employee/role changes that affect the current session
+useSSE({
+  // If an admin updates the current user's roles/profile, refresh immediately
+  'employee:admin-updated': (data) => {
+    applyAdminUpdate(data)
+  },
+  // If an admin force-logs out the current user
+  'employee:updated': (data) => {
+    if (currentUser.value && data.id === currentUser.value.id) {
+      if (data.status !== undefined) currentUser.value.status = data.status
+      if (data.first_name !== undefined) currentUser.value.first_name = data.first_name
+      if (data.last_name !== undefined) currentUser.value.last_name = data.last_name
+    }
+  },
+  // If the current user's account is deleted, force logout
+  'employee:deleted': (data) => {
+    if (currentUser.value && data.id === currentUser.value.id) {
+      doLogout()
+      openError('Your account has been removed by an administrator.')
+    }
+  },
+})
 
 // import { onMounted, provide, ref } from 'vue'
 // import Window from './components/misc/window.vue'

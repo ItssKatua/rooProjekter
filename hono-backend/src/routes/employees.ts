@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { query } from '../db.ts'
 import { authService } from '../services/authService.ts'
+import { broadcast } from '../sse.ts'
 
 const employees = new Hono()
 
@@ -54,11 +55,14 @@ employees.patch('/me', authService, async (c) => {
 
   params.push(user.id)
   await query(`UPDATE employees SET ${updates.join(', ')} WHERE id = ?`, params)
+
+  broadcast('employee:updated', { id: user.id, first_name, last_name, status })
+
   return c.json({ success: true })
 })
 
 
-// get all emplkyeds
+// get all employees
 employees.get('/', authService, async (c) => {
   const rows: any = await query(
     `SELECT e.id, e.first_name, e.last_name, e.email, e.status,
@@ -76,7 +80,7 @@ employees.get('/', authService, async (c) => {
   return c.json(rows)
 })
 
-// roles of emploey
+// roles of employee
 employees.get('/departments', authService, async (c) => {
   const rows = await query(`SELECT * FROM departments ORDER BY name`)
   return c.json(rows)
@@ -143,6 +147,22 @@ employees.patch('/admin/:id', authService, requireAdmin, async (c) => {
       await query(`INSERT INTO employee_roles (employee_id, role_id) VALUES (?, ?)`, [id, rid])
     }
   }
+
+  // fetch updated roles to broadcast
+  const updatedRoles: any = await query(
+    `SELECT r.name FROM employee_roles er JOIN roles r ON er.role_id = r.id WHERE er.employee_id = ?`,
+    [id]
+  )
+  broadcast('employee:admin-updated', {
+    id: Number(id),
+    first_name,
+    last_name,
+    email,
+    department_id,
+    role_ids,
+    roles: updatedRoles.map((r: any) => r.name),
+  })
+
   const admin = c.get('user')
   await query(
     `INSERT INTO activity_logs (employee_id, action, endpoint, method, ip_address, created_at)
@@ -156,6 +176,9 @@ employees.patch('/admin/:id', authService, requireAdmin, async (c) => {
 employees.post('/admin/:id/logout', authService, requireAdmin, async (c) => {
   const id = c.req.param('id')
   await query(`UPDATE employees SET status = 'offline' WHERE id = ?`, [id])
+
+  broadcast('employee:updated', { id: Number(id), status: 'offline' })
+
   const admin = c.get('user')
   await query(
     `INSERT INTO activity_logs (employee_id, action, endpoint, method, ip_address, created_at)
@@ -175,6 +198,9 @@ employees.delete('/admin/:id', authService, requireAdmin, async (c) => {
   await query(`DELETE FROM employee_roles WHERE employee_id = ?`, [id])
   await query(`DELETE FROM activity_logs WHERE employee_id = ?`, [id])
   await query(`DELETE FROM employees WHERE id = ?`, [id])
+
+  broadcast('employee:deleted', { id: Number(id) })
+
   return c.json({ success: true })
 })
 
