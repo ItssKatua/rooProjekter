@@ -88,7 +88,7 @@
             <button class="default" @click="saveEmployee" :disabled="saving || editForm.role_ids.length === 0">
               {{ saving ? 'Saving...' : 'Save Changes' }}
             </button>
-            <button @click="forceLogout(selected.id)">Force Log Out</button>
+            <button @click="forceLogout(selected.id)" disabled>Force Log Out</button>
             <button @click="deleteEmployee(selected.id)" style="color: #c00;">Delete Account</button>
           </div>
           <span v-if="saveMsg" style="font-size:10px; color:green; margin-top:4px; display:block;">{{ saveMsg }}</span>

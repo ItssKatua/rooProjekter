@@ -69,7 +69,6 @@ function openErrorConfirm(msg) {
   showError.value = true
   audioChime.currentTime = 0
   audioChime.play().catch(() => {})
-  console.error("gjkaweqngnrsig");
   
 
   return new Promise((resolve) => {

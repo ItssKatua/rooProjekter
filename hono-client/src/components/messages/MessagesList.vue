@@ -1,5 +1,8 @@
 <template>
   <div>
+    <b style="font-size:16px; color:red;">
+        Out of order - Maintenance
+    </b>
     <p style="font-size:10px; color:#666;">
         Double-click to open chat
     </p>
@@ -31,7 +34,7 @@
     </div>
 
     <div class="field-row" style="margin: 8px 0px; gap: 6px;">
-      <button :disabled="!selectedEmp || selectedEmp.id === currentUser?.id" @click="openChat(selectedEmp)">
+      <button :disabled="!selectedEmp || selectedEmp.id === currentUser?.id" @click="openChat(selectedEmp)" disabled>
         Open Chat
       </button>
       <button @click="loadEmployees" style="min-width:auto; padding: 0 8px;">↺ Refresh</button>

@@ -36,6 +36,7 @@ function connect() {
     'employee:deleted',
   ]
 
+
   EVENTS.forEach((evt) => {
     es.addEventListener(evt, (e) => {
       const data = JSON.parse(e.data)

@@ -29,7 +29,7 @@
           @click.stop="$emit('delete', post.id)"
           style="min-width:auto; padding:0 5px; height:18px; font-size:10px; color:#c00;"
           title="Delete post"
-        >✕</button>
+        >❌</button>
       </div>
     </div>
 
@@ -44,8 +44,8 @@
       style="padding: 2px 8px 4px; font-size:10px; color:#555; cursor:pointer; display:flex; gap:8px; user-select:none;"
       @click="toggleExpand"
     >
-      <span>💬 {{ localCommentCount }} comment{{ localCommentCount !== 1 ? 's' : '' }}</span>
-      <span style="color:navy;">{{ expanded ? '▲ hide' : '▼ show comments' }}</span>
+      <span> {{ localCommentCount }} comment{{ localCommentCount !== 1 ? 's' : '' }}</span>
+      <span style="color:navy;">{{ expanded ? '▲ hide' : '▼ show' }}</span>
     </div>
 
     <!-- Comments section -->
@@ -67,7 +67,7 @@
           @reload="loadComments"
         />
         <div v-if="topLevelComments.length === 0" style="padding:4px 0 8px; font-size:11px; color:#888; text-align:center;">
-          No comments yet. Be the first!
+          No comments yet.
         </div>
       </div>
 

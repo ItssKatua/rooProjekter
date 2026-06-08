@@ -112,28 +112,6 @@ async function submitPost() {
   }
 }
 
-async function handleReact(postId) {
-  try {
-    await api(`/posts/${postId}/react`, {
-      method: 'POST',
-      body: JSON.stringify({ type: 'like' }),
-    })
-    // SSE will broadcast the reaction count; also update locally for instant feedback
-    const post = posts.value.find(p => p.id === postId)
-    if (post) {
-      if (post.user_reacted) {
-        post.reaction_count = Math.max(0, (post.reaction_count || 0) - 1)
-        post.user_reacted = 0
-      } else {
-        post.reaction_count = (post.reaction_count || 0) + 1
-        post.user_reacted = 1
-      }
-    }
-  } catch (err) {
-    openError?.('Failed to react: ' + err.message)
-  }
-}
-
 async function handleDelete(postId) {
   const ok = await openErrorConfirm?.('Delete this announcement?')
   if (!ok) return
@@ -146,17 +124,42 @@ async function handleDelete(postId) {
   }
 }
 
+async function handleReact(postId) {
+  try {
+    await api(`/posts/${postId}/react`, {
+      method: 'POST',
+      body: JSON.stringify({ type: 'like' }),
+    })
+    /*
+    const post = posts.value.find(p => p.id === postId)
+    if (post) {
+      if (post.user_reacted) {
+        post.reaction_count = Math.max(0, (post.reaction_count || 0) - 1)
+        post.user_reacted = 0
+      } else {
+        post.reaction_count = (post.reaction_count || 0) + 1
+        post.user_reacted = 1
+      }
+    }*/
+  } catch (err) {
+    console.error(err)
+    openError?.('Failed to react: ' + err.message)
+  }
+}
+
+
 async function handleTogglePin(post) {
   try {
     await api(`/posts/${post.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ pinned: !post.pinned }),
     })
-    // SSE will update; also optimistic local update
+    /*
     const p = posts.value.find(p => p.id === post.id)
     if (p) p.pinned = !post.pinned
-    posts.value.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+    posts.value.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))*/
   } catch (err) {
+    console.error(err)
     openError?.('Failed to toggle pin: ' + err.message)
   }
 }
@@ -186,8 +189,8 @@ useSSE({
     const p = posts.value.find(p => p.id === data.id)
     if (p) {
       Object.assign(p, data)
-      posts.value.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
     }
+    posts.value.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
   },
   'post:deleted': (data) => {
     posts.value = posts.value.filter(p => p.id !== data.id)
