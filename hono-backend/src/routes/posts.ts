@@ -25,18 +25,17 @@ posts.get('/', authService, async (c) => {
 // create post (management or admin only)
 posts.post('/', authService, async (c) => {
   const user = c.get('user')
-
-  // check role
+ 
   const roles: any = await query(
     `SELECT r.name FROM employee_roles er JOIN roles r ON er.role_id = r.id WHERE er.employee_id = ?`,
     [user.id]
   )
   const allowed = roles.some((r: any) => ['management', 'admin'].includes(r.name))
   if (!allowed) return c.json({ error: 'Forbidden' }, 403)
-
+ 
   const { title, content, pinned } = await c.req.json()
   if (!title || !content) return c.json({ error: 'Title and content required' }, 400)
-
+ 
   await query(
     `INSERT INTO posts (title, content, author_id, pinned, created_at, updated_at)
      VALUES (?, ?, ?, ?, NOW(), NOW())`,
@@ -45,25 +44,52 @@ posts.post('/', authService, async (c) => {
   return c.json({ success: true })
 })
 
+posts.patch('/:id', authService, async (c) => {
+  const user = c.get('user')
+  const id = c.req.param('id')
+ 
+  const roles: any = await query(
+    `SELECT r.name FROM employee_roles er JOIN roles r ON er.role_id = r.id WHERE er.employee_id = ?`,
+    [user.id]
+  )
+  const allowed = roles.some((r: any) => ['management', 'admin'].includes(r.name))
+  if (!allowed) return c.json({ error: 'Forbidden' }, 403)
+ 
+  const body = await c.req.json()
+  const updates: string[] = []
+  const params: any[] = []
+ 
+  if (body.pinned !== undefined) { updates.push('pinned = ?'); params.push(body.pinned ? 1 : 0) }
+  if (body.title !== undefined)  { updates.push('title = ?');  params.push(body.title) }
+  if (body.content !== undefined){ updates.push('content = ?'); params.push(body.content) }
+ 
+  if (updates.length === 0) return c.json({ error: 'Nothing to update' }, 400)
+ 
+  updates.push('updated_at = NOW()')
+  params.push(id)
+  await query(`UPDATE posts SET ${updates.join(', ')} WHERE id = ?`, params)
+  return c.json({ success: true })
+})
+
 // delete post
 posts.delete('/:id', authService, async (c) => {
   const user = c.get('user')
   const id = c.req.param('id')
-
+ 
   const posts_: any = await query(`SELECT * FROM posts WHERE id = ?`, [id])
   const post = posts_[0]
   if (!post) return c.json({ error: 'Not found' }, 404)
-
+ 
   const roles: any = await query(
     `SELECT r.name FROM employee_roles er JOIN roles r ON er.role_id = r.id WHERE er.employee_id = ?`,
     [user.id]
   )
   const isPrivileged = roles.some((r: any) => ['management', 'admin'].includes(r.name))
-
+ 
   if (post.author_id !== user.id && !isPrivileged) {
     return c.json({ error: 'Forbidden' }, 403)
   }
-
+ 
   await query(`DELETE FROM reactions WHERE post_id = ?`, [id])
   await query(`DELETE FROM comments WHERE post_id = ?`, [id])
   await query(`DELETE FROM posts WHERE id = ?`, [id])
@@ -89,9 +115,9 @@ posts.post('/:id/comments', authService, async (c) => {
   const postId = c.req.param('id')
   const { content, parent_id } = await c.req.json()
   const user = c.get('user')
-
+ 
   if (!content) return c.json({ error: 'Content required' }, 400)
-
+ 
   await query(
     `INSERT INTO comments (post_id, content, parent_comment_id, author_id, created_at, updated_at)
      VALUES (?, ?, ?, ?, NOW(), NOW())`,
@@ -104,21 +130,21 @@ posts.post('/:id/comments', authService, async (c) => {
 posts.delete('/:postId/comments/:commentId', authService, async (c) => {
   const user = c.get('user')
   const commentId = c.req.param('commentId')
-
+ 
   const comments: any = await query(`SELECT * FROM comments WHERE id = ?`, [commentId])
   const comment = comments[0]
   if (!comment) return c.json({ error: 'Not found' }, 404)
-
+ 
   const roles: any = await query(
     `SELECT r.name FROM employee_roles er JOIN roles r ON er.role_id = r.id WHERE er.employee_id = ?`,
     [user.id]
   )
   const isPrivileged = roles.some((r: any) => ['management', 'admin'].includes(r.name))
-
+ 
   if (comment.author_id !== user.id && !isPrivileged) {
     return c.json({ error: 'Forbidden' }, 403)
   }
-
+ 
   await query(`DELETE FROM comments WHERE id = ?`, [commentId])
   return c.json({ success: true })
 })
@@ -128,17 +154,17 @@ posts.post('/:id/react', authService, async (c) => {
   const postId = c.req.param('id')
   const { type } = await c.req.json()
   const user = c.get('user')
-
+ 
   const existing: any = await query(
     `SELECT * FROM reactions WHERE post_id = ? AND employee_id = ?`,
     [postId, user.id]
   )
-
+ 
   if (existing.length) {
     await query(`DELETE FROM reactions WHERE id = ?`, [existing[0].id])
     return c.json({ removed: true })
   }
-
+ 
   await query(
     `INSERT INTO reactions (post_id, employee_id, type, created_at)
      VALUES (?, ?, ?, NOW())`,
