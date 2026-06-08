@@ -72,7 +72,6 @@ employees.get('/', authService, async (c) => {
      LEFT JOIN departments d ON e.department_id = d.id
      LEFT JOIN employee_roles er ON e.id = er.employee_id
      LEFT JOIN roles r ON er.role_id = r.id
-     WHERE e.is_active = 1
      GROUP BY e.id
      ORDER BY e.last_name, e.first_name`
   )
